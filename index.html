@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ДоброРядом — Платформа локального микро-волонтерства</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        display: ['"Unbounded"', 'sans-serif'],
+                        sans: ['"Golos Text"', 'sans-serif'],
+                    },
+                    colors: {
+                        cream: {
+                            50: '#FDF8F5',
+                            100: '#F7EFEA',
+                            200: '#EDE0D8',
+                        },
+                        terracotta: {
+                            400: '#FF7A59',
+                            500: '#E05A47',
+                            600: '#C84432',
+                            700: '#A63324',
+                        },
+                        indigoBrand: {
+                            400: '#7C83FD',
+                            500: '#545CD8',
+                            600: '#3B429F',
+                            700: '#2A307A',
+                        },
+                        espresso: '#1E1B18',
+                        obsidian: {
+                            950: '#121016',
+                            900: '#1C1924',
+                            800: '#272333',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts: Unbounded & Golos Text -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Unbounded:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Golos Text', sans-serif;
+            transition: background-color 0.35s ease, color 0.35s ease;
+        }
+
+        h1, h2, h3, .font-display {
+            font-family: 'Unbounded', sans-serif;
+        }
+
+        /* Подсветка целевой секции при переходе из путеводителя */
+        @keyframes sectionHighlight {
+            0% { box-shadow: 0 0 0 0 rgba(224, 90, 71, 0.55); }
+            50% { box-shadow: 0 0 0 14px rgba(224, 90, 71, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(224, 90, 71, 0); }
+        }
+        .highlight-target {
+            animation: sectionHighlight 1.6s ease-out 2;
+            outline: 2px solid #E05A47;
+            outline-offset: -2px;
+        }
+        .dark .highlight-target {
+            outline-color: #FF7A59;
+        }
+
+        /* Плавное появление модальных окон */
+        @keyframes modalPop {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .animate-modal {
+            animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Кастомный скроллбар */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #E05A47;
+            border-radius: 9999px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #FF7A59;
+        }
+    </style>
+</head>
+<body class="bg-cream-50 text-espresso dark:bg-obsidian-950 dark:text-[#F5F0EB] min-h-screen flex flex-col justify-between selection:bg-terracotta-500 selection:text-white">
+
+    <!-- Интерактивный Путеводитель по сайту (Modal) -->
+    <div id="guide-modal" class="fixed inset-0 bg-obsidian-950/70 backdrop-blur-md z-50 hidden flex items-center justify-center p-4" onclick="if(event.target === this) closeGuide()">
+        <div class="bg-white dark:bg-obsidian-900 rounded-3xl p-6 sm:p-8 max-w-xl w-full shadow-2xl border border-cream-200 dark:border-obsidian-800 relative animate-modal">
+            <button onclick="closeGuide()" class="absolute top-5 right-5 w-9 h-9 rounded-full bg-cream-100 dark:bg-obsidian-800 text-espresso/60 dark:text-[#F5F0EB]/60 hover:text-terracotta-500 dark:hover:text-terracotta-400 flex items-center justify-center transition" aria-label="Закрыть путеводитель">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            
+            <div class="flex items-center gap-4 mb-6">
+                <div class="w-14 h-14 bg-gradient-to-br from-terracotta-500 to-indigoBrand-600 dark:from-terracotta-400 dark:to-indigoBrand-400 text-white rounded-2xl flex items-center justify-center text-2xl shadow-lg shrink-0">
+                    <i class="fa-solid fa-compass"></i>
+                </div>
+                <div>
+                    <span class="text-[11px] font-bold uppercase tracking-widest text-terracotta-500 dark:text-terracotta-400">Навигатор по платформе</span>
+                    <h3 class="text-xl sm:text-2xl font-bold mt-0.5">Путеводитель «ДоброРядом»</h3>
+                </div>
+            </div>
+
+            <p class="text-sm text-espresso/75 dark:text-[#F5F0EB]/75 mb-5">
+                Выберите цель, и мы мгновенно перенесём вас в нужный раздел страницы и подсветим его:
+            </p>
+
+            <div class="space-y-3">
+                <button onclick="navigateTo('#join', 'volunteer')" class="w-full p-4 rounded-2xl border border-cream-200 dark:border-obsidian-800 hover:border-terracotta-500 dark:hover:border-terracotta-400 bg-cream-50/60 dark:bg-obsidian-800/50 hover:bg-white dark:hover:bg-obsidian-800 text-left flex items-center gap-4 transition group">
+                    <div class="w-11 h-11 rounded-xl bg-terracotta-500/15 text-terracotta-600 dark:text-terracotta-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition">
+                        <i class="fa-solid fa-user-plus text-lg"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <div class="font-display font-semibold text-sm group-hover:text-terracotta-500 dark:group-hover:text-terracotta-400 transition">Где записаться в волонтёры</div>
+                        <div class="text-xs text-espresso/65 dark:text-[#F5F0EB]/65 mt-0.5">Быстрая анкета соседа-помощника за 1 минуту</div>
+                    </div>
+                    <i class="fa-solid fa-arrow-right text-xs text-espresso/40 dark:text-[#F5F0EB]/40 group-hover:translate-x-1 transition"></i>
+                </button>
+
+                <button onclick="navigateTo('#tasks')" class="w-full p-4 rounded-2xl border border-cream-200 dark:border-obsidian-800 hover:border-indigoBrand-500 dark:hover:border-indigoBrand-400 bg-cream-50/60 dark:bg-obsidian-800/50 hover:bg-white dark:hover:bg-obsidian-800 text-left flex items-center gap-4 transition group">
+                    <div class="w-11 h-11 rounded-xl bg-indigoBrand-600/15 dark:bg-indigoBrand-400/20 text-indigoBrand-600 dark:text-indigoBrand-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition">
+                        <i class="fa-solid fa-stopwatch text-lg"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <div class="font-display font-semibold text-sm group-hover:text-indigoBrand-600 dark:group-hover:text-indigoBrand-400 transition">Как выбрать задачу на 15 минут</div>
+                        <div class="text-xs text-espresso/65 dark:text-[#F5F0EB]/65 mt-0.5">Каталог просьб рядом с фильтрами по категориям</div>
+                    </div>
+                    <i class="fa-solid fa-arrow-right text-xs text-espresso/40 dark:text-[#F5F0EB]/40 group-hover:translate-x-1 transition"></i>
+                </button>
+
+                <button onclick="navigateTo('#team')" class="w-full p-4 rounded-2xl border border-cream-200 dark:border-obsidian-800 hover:border-terracotta-500 dark:hover:border-terracotta-400 bg-cream-50/60 dark:bg-obsidian-800/50 hover:bg-white dark:hover:bg-obsidian-800 text-left flex items-center gap-4 transition group">
+                    <div class="w-11 h-11 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition">
+                        <i class="fa-solid fa-award text-lg"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <div class="font-display font-semibold text-sm group-hover:text-terracotta-500 dark:group-hover:text-terracotta-400 transition">Познакомиться с соседями-героями</div>
+                        <div class="text-xs text-espresso/65 dark:text-[#F5F0EB]/65 mt-0.5">Истории реальных жителей нашего квартала</div>
+                    </div>
+                    <i class="fa-solid fa-arrow-right text-xs text-espresso/40 dark:text-[#F5F0EB]/40 group-hover:translate-x-1 transition"></i>
+                </button>
+
+                <button onclick="navigateTo('#about')" class="w-full p-4 rounded-2xl border border-cream-200 dark:border-obsidian-800 hover:border-indigoBrand-500 dark:hover:border-indigoBrand-400 bg-cream-50/60 dark:bg-obsidian-800/50 hover:bg-white dark:hover:bg-obsidian-800 text-left flex items-center gap-4 transition group">
+                    <div class="w-11 h-11 rounded-xl bg-indigoBrand-600/15 dark:bg-indigoBrand-400/20 text-indigoBrand-600 dark:text-indigoBrand-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition">
+                        <i class="fa-solid fa-book-open text-lg"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <div class="font-display font-semibold text-sm group-hover:text-indigoBrand-600 dark:group-hover:text-indigoBrand-400 transition">Узнать правила платформы</div>
+                        <div class="text-xs text-espresso/65 dark:text-[#F5F0EB]/65 mt-0.5">Принципы безопасности и добрососедства</div>
+                    </div>
+                    <i class="fa-solid fa-arrow-right text-xs text-espresso/40 dark:text-[#F5F0EB]/40 group-hover:translate-x-1 transition"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно подтверждения заявки -->
+    <div id="confirm-modal" class="fixed inset-0 bg-obsidian-950/70 backdrop-blur-md z-50 hidden flex items-center justify-center p-4" onclick="if(event.target === this) closeConfirmModal()">
+        <div class="bg-white dark:bg-obsidian-900 rounded-3xl p-7 sm:p-9 max-w-md w-full shadow-2xl border border-cream-200 dark:border-obsidian-800 text-center animate-modal">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-terracotta-500 to-indigoBrand-600 text-white flex items-center justify-center text-3xl mx-auto mb-5 shadow-lg shadow-terracotta-500/25">
+                <i class="fa-solid fa-heart-circle-check"></i>
+            </div>
+            <h3 id="confirm-title" class="text-xl font-bold mb-2">Заявка принята!</h3>
+            <p id="confirm-desc" class="text-sm text-espresso/75 dark:text-[#F5F0EB]/75 leading-relaxed mb-6">
+                Координатор квартала свяжется с вами в течение 15 минут. Спасибо, что делаете наш район теплее!
+            </p>
+            <button onclick="closeConfirmModal()" class="w-full py-3.5 bg-terracotta-500 hover:bg-terracotta-600 dark:bg-terracotta-400 dark:hover:bg-terracotta-500 text-white dark:text-obsidian-950 font-display font-semibold text-sm rounded-2xl transition">
+                Отлично, спасибо!
+            </button>
+        </div>
+    </div>
+
+    <!-- Плавающая кнопка Путеводителя в правом нижнем углу -->
+    <button onclick="openGuide()" class="fixed bottom-6 right-6 z-40 group flex items-center gap-3 bg-indigoBrand-600 hover:bg-indigoBrand-700 dark:bg-indigoBrand-400 dark:hover:bg-indigoBrand-500 text-white dark:text-obsidian-950 px-5 py-3.5 rounded-full shadow-xl shadow-indigoBrand-600/30 transition-all duration-300 hover:scale-105" aria-label="Открыть путеводитель по сайту">
+        <i class="fa-solid fa-compass text-lg group-hover:rotate-45 transition-transform duration-300"></i>
+        <span class="font-display text-xs font-semibold tracking-wide">Путеводитель</span>
+    </button>
+
+    <!-- Шапка сайта -->
+    <header class="sticky top-0 z-40 backdrop-blur-lg bg-cream-50/85 dark:bg-obsidian-950/85 border-b border-cream-200 dark:border-obsidian-800 transition-colors">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            
+            <!-- Уникальный SVG-логотип «ДоброРядом» (Маяк/дом с сердцем и лучами) -->
+            <a href="#" class="flex items-center gap-3.5 group">
+                <div class="w-12 h-12 rounded-2xl bg-white dark:bg-obsidian-900 border border-cream-200 dark:border-obsidian-800 flex items-center justify-center shadow-md group-hover:scale-105 transition">
+                    <svg class="w-8 h-8" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Лучи маяка -->
+                        <path d="M20 3V7" stroke="#E05A47" stroke-width="2.4" stroke-linecap="round"/>
+                        <path d="M8.5 7.5L11.3 10.3" stroke="#E05A47" stroke-width="2.4" stroke-linecap="round"/>
+                        <path d="M31.5 7.5L28.7 10.3" stroke="#E05A47" stroke-width="2.4" stroke-linecap="round"/>
+                        <!-- Крыша дома / верх маяка -->
+                        <path d="M8 20L20 10.5L32 20" stroke="#3B429F" class="dark:stroke-[#7C83FD]" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+                        <!-- Стены дома -->
+                        <path d="M12 18V32C12 33.1046 12.8954 34 14 34H26C27.1046 34 28 33.1046 28 32V18" stroke="#3B429F" class="dark:stroke-[#7C83FD]" stroke-width="2.6" stroke-linecap="round"/>
+                        <!-- Сердце внутри -->
+                        <path d="M20 28.5C20 28.5 15 25.1 15 21.8C15 20.2 16.2 19 17.7 19C18.7 19 19.5 19.5 20 20.3C20.5 19.5 21.3 19 22.3 19C23.8 19 25 20.2 25 21.8C25 25.1 20 28.5 20 28.5Z" fill="#E05A47" class="dark:fill-[#FF7A59]"/>
+                    </svg>
+                </div>
+                <div>
+                    <span class="font-display text-lg sm:text-xl font-bold tracking-tight text-espresso dark:text-[#F5F0EB]">
+                        Добро<span class="text-terracotta-500 dark:text-terracotta-400">Рядом</span>
+                    </span>
+                    <span class="block text-[11px] font-medium text-indigoBrand-600 dark:text-indigoBrand-400 -mt-0.5">
+                        Фонд соседской взаимопомощи
+                    </span>
+                </div>
+            </a>
+
+            <!-- Навигация (Desktop) -->
+            <nav class="hidden lg:flex items-center gap-1">
+                <a href="#about" class="px-3.5 py-2 text-sm font-medium rounded-xl text-espresso/80 dark:text-[#F5F0EB]/80 hover:text-terracotta-500 dark:hover:text-terracotta-400 hover:bg-cream-100 dark:hover:bg-obsidian-900 transition">О платформе</a>
+                <a href="#tasks" class="px-3.5 py-2 text-sm font-medium rounded-xl text-espresso/80 dark:text-[#F5F0EB]/80 hover:text-terracotta-500 dark:hover:text-terracotta-400 hover:bg-cream-100 dark:hover:bg-obsidian-900 transition">Задачи рядом</a>
+                <a href="#team" class="px-3.5 py-2 text-sm font-medium rounded-xl text-espresso/80 dark:text-[#F5F0EB]/80 hover:text-terracotta-500 dark:hover:text-terracotta-400 hover:bg-cream-100 dark:hover:bg-obsidian-900 transition">Герои района</a>
+                <a href="#join" class="px-3.5 py-2 text-sm font-medium rounded-xl text-espresso/80 dark:text-[#F5F0EB]/80 hover:text-terracotta-500 dark:hover:text-terracotta-400 hover:bg-cream-100 dark:hover:bg-obsidian-900 transition">Записаться</a>
+            </nav>
+
+            <!-- Действия: Путеводитель + Переключатель темы -->
+            <div class="flex items-center gap-2.5">
+                <button onclick="openGuide()" class="px-3.5 py-2.5 bg-terracotta-500/10 dark:bg-terracotta-400/15 text-terracotta-600 dark:text-terracotta-400 hover:bg-terracotta-500 hover:text-white dark:hover:bg-terracotta-400 dark:hover:text-obsidian-950 rounded-xl text-xs font-display font-semibold transition flex items-center gap-2">
+                    <i class="fa-solid fa-map-signs"></i>
+                    <span class="hidden sm:inline">Путеводитель</span>
+                </button>
+
+                <!-- Переключатель светлой / тёмной темы -->
+                <button id="theme-toggle" class="w-10 h-10 rounded-xl bg-white dark:bg-obsidian-900 border border-cream-200 dark:border-obsidian-800 text-espresso dark:text-[#F5F0EB] hover:border-terracotta-500 dark:hover:border-terracotta-400 flex items-center justify-center transition shadow-sm" aria-label="Переключить тему оформления" title="Сменить тему">
+                    <i id="theme-toggle-dark-icon" class="fa-solid fa-moon text-indigoBrand-600 text-base hidden"></i>
+                    <i id="theme-toggle-light-icon" class="fa-solid fa-sun text-terracotta-400 text-base hidden"></i>
+                </button>
+
+                <!-- Кнопка мобильного меню -->
+                <button id="mobile-menu-btn" class="lg:hidden w-10 h-10 rounded-xl bg-white dark:bg-obsidian-900 border border-cream-200 dark:border-obsidian-800 text-espresso dark:text-[#F5F0EB] flex items-center justify-center" aria-label="Меню">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Мобильное меню -->
+        <div id="mobile-menu" class="hidden lg:hidden border-t border-cream-200 dark:border-obsidian-800 bg-white dark:bg-obsidian-900 px-4 pt-3 pb-5 space-y-1.5">
+            <a href="#about" onclick="toggleMobileMenu()" class="block px-4 py-2.5 text-sm font-medium rounded-xl hover:bg-cream-100 dark:hover:bg-obsidian-800">О платформе</a>
+            <a href="#tasks" onclick="toggleMobileMenu()" class="block px-4 py-2.5 text-sm font-medium rounded-xl hover:bg-cream-100 dark:hover:bg-obsidian-800">Задачи рядом</a>
+            <a href="#team" onclick="toggleMobileMenu()" class="block px-4 py-2.5 text-sm font-medium rounded-xl hover:bg-cream-100 dark:hover:bg-obsidian-800">Герои района</a>
+            <a href="#join" onclick="toggleMobileMenu()" class="block px-4 py-2.5 text-sm font-medium rounded-xl hover:bg-cream-100 dark:hover:bg-obsidian-800">Записаться</a>
+        </div>
+    </header>
+
+    <main class="flex-grow">
+        <!-- Hero Секция -->
+        <section class="relative overflow-hidden py-14 sm:py-20 lg:py-24">
+            <!-- Декоративные пятна фона -->
+            <div class="pointer-events-none absolute -top-24 -left-24 w-96 h-96 rounded-full bg-terracotta-500/10 dark:bg-terracotta-400/10 blur-3xl"></div>
+            <div class="pointer-events-none absolute top-1/2 -right-24 w-96 h-96 rounded-full bg-indigoBrand-600/10 dark:bg-indigoBrand-400/10 blur-3xl"></div>
+
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                <div class="grid lg:grid-cols-12 gap-12 items-center">
+                    <div class="lg:col-span-7">
+                        <div class="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white dark:bg-obsidian-900 border border-cream-200 dark:border-obsidian-800 shadow-sm text-xs font-semibold text-indigoBrand-600 dark:text-indigoBrand-400 mb-6">
+                            <span class="w-2 h-2 rounded-full bg-terracotta-500 animate-ping"></span>
+                            Локальное микро-волонтёрство в вашем квартале
+                        </div>
+                        <h1 class="text-3xl sm:text-5xl lg:text-[52px] font-extrabold tracking-tight leading-[1.15] mb-6">
+                            Тёплая помощь <br>
+                            <span class="text-terracotta-500 dark:text-terracotta-400">за 15 минут</span> <br>
+                            по соседству
+                        </h1>
+                        <p class="text-base sm:text-lg text-espresso/80 dark:text-[#F5F0EB]/80 mb-8 leading-relaxed max-w-2xl">
+                            Добро не требует подвигов и сложных отчётов. Занести тяжёлую сумку пожилой соседке по пути с работы, покормить бездомного кота во дворе или полить клумбу у подъезда — выберите дело по силам прямо рядом с домом.
+                        </p>
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <a href="#tasks" class="px-7 py-4 bg-terracotta-500 hover:bg-terracotta-600 dark:bg-terracotta-400 dark:hover:bg-terracotta-500 text-white dark:text-obsidian-950 font-display text-xs sm:text-sm font-semibold rounded-2xl shadow-lg shadow-terracotta-500/25 text-center transition hover:-translate-y-0.5">
+                                Выбрать микро-задачу
+                            </a>
+                            <button onclick="navigateTo('#join', 'need_help')" class="px-7 py-4 bg-white dark:bg-obsidian-900 border border-cream-200 dark:border-obsidian-800 hover:border-indigoBrand-600 dark:hover:border-indigoBrand-400 text-espresso dark:text-[#F5F0EB] font-display text-xs sm:text-sm font-semibold rounded-2xl text-center transition">
+                                Попросить о помощи
+                            </button>
+                        </div>
+
+                        <!-- Живая статистика -->
+                        <div class="grid grid-cols-3 gap-4 sm:gap-8 mt-12 pt-8 border-t border-cream-200 dark:border-obsidian-800">
+                            <div>
+                                <div id="stat-tasks-done" class="font-display text-2xl sm:text-3xl font-bold text-terracotta-500 dark:text-terracotta-400">1 482</div>
+                                <div class="text-xs text-espresso/65 dark:text-[#F5F0EB]/65 mt-1">Выполненных дел</div>
+                            </div>
+                            <div>
+                                <div class="font-display text-2xl sm:text-3xl font-bold text-indigoBrand-600 dark:text-indigoBrand-400">15–30</div>
+                                <div class="text-xs text-espresso/65 dark:text-[#F5F0EB]/65 mt-1">Минут на задачу</div>
+                            </div>
+                            <div>
+                                <div id="stat-volunteers" class="font-display text-2xl sm:text-3xl font-bold text-terracotta-500 dark:text-terracotta-400">514</div>
+                                <div class="text-xs text-espresso/65 dark:text-[#F5F0EB]/65 mt-1">Соседей в деле</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Карточка живой ленты района -->
+                    <div class="lg:col-span-5">
+                        <div class="bg-white dark:bg-obsidian-900 border border-cream-200 dark:border-obsidian-800 rounded-3xl p-6 sm:p-7 shadow-xl">
+                            <div class="flex items-center justify-between mb-5">
+                                <span class="font-display text-xs font-semibold uppercase tracking-wider text-espresso/60 dark:text-[#F5F0EB]/60">Пульс квартала</span>
+                                <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-terracotta-600 dark:text-terracotta-400 bg-terracotta-500/10 px-3 py-1 rounded-full">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-terracotta-500"></span> Онлайн
+                                </span>
+                            </div>
+
+                            <div class="space-y-3.5" id="live-feed">
+                                <div class="p-4 rounded-2xl bg-cream-50 dark:bg-obsidian-800/70 border border-cream-200/70 dark:border-obsidian-800 flex items-start gap-3.5">
+                                    <div class="w-10 h-10 rounded-xl bg-terracotta-500/15 text-terracotta-600 dark:text-terracotta-400 flex items-center justify-center shrink-0 font-display font-bold text-xs">
+                                        АК
+                                    </div>
+                                    <div class="flex-grow">
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-sm font-bold">Артём Ковалёв</span>
+                                            <span class="text-[11px] text-espresso/50 dark:text-[#F5F0EB]/50">4 мин назад</span>
+                                        </div>
+                                        <p class="text-xs text-espresso/75 dark:text-[#F5F0EB]/75 mt-1">Заменил перегоревшую лампочку в тамбуре 3-го подъезда на ул. Садовой</p>
+                                        <span class="inline-block mt-2 text-[11px] font-semibold text-indigoBrand-600 dark:text-indigoBrand-400">⏱ 15 минут · Быт</span>
+                                    </div>
+                                </div>
+
+                                <div class="p-4 rounded-2xl bg-cream-50 dark:bg-obsidian-800/70 border border-cream-200/70 dark:border-obsidian-800 flex items-start gap-3.5">
+                                    <div class="w-10 h-10 rounded-xl bg-indigoBrand-600/15 dark:bg-indigoBrand-400/20 text-indigoBrand-600 dark:text-indigoBrand-400 flex items-center justify-center shrink-0 font-display font-bold text-xs">
+                                        ДМ
+                                    </div>
+                                    <div class="flex-grow">
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-sm font-bold">Дарья Морозова</span>
+                                            <span class="text-[11px] text-espresso/50 dark:text-[#F5F0EB]/50">19 мин назад</span>
+                                        </div>
+                                        <p class="text-xs text-espresso/75 dark:text-[#F5F0EB]/75 mt-1">Забрала посылку с почты для дедушки Виктора Петровича</p>
+                                        <span class="inline-block mt-2 text-[11px] font-semibold text-terracotta-600 dark:text-terracotta-400">⏱ 20 минут · Пожилым</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button onclick="openGuide()" class="w-full mt-5 py-3.5 rounded-2xl bg-indigoBrand-600/10 dark:bg-indigoBrand-400/15 text-indigoBrand-600 dark:text-indigoBrand-400 hover:bg-indigoBrand-600 hover:text-white dark:hover:bg-indigoBrand-400 dark:hover:text-obsidian-950 font-display text-xs font-semibold transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-compass"></i> Открыть путеводитель по сайту
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Секция: О платформе и правила -->
+        <section id="about" class="py-16 sm:py-24 bg-white dark:bg-obsidian-900 border-y border-cream-200 dark:border-obsidian-800 transition-colors rounded-none">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="max-w-3xl mb-14">
+                    <span class="font-display text-xs font-semibold uppercase tracking-widest text-terracotta-500 dark:text-terracotta-400">О платформе и правилах</span>
+                    <h2 class="text-2xl sm:text-4xl font-bold mt-2">Как устроено микро-волонтёрство?</h2>
+                    <p class="mt-4 text-espresso/75 dark:text-[#F5F0EB]/75 text-base leading-relaxed">
+                        «ДоброРядом» создано для тех, кто хочет помогать, но живёт в плотном графике. Никаких обязательных смен и бюрократии — только конкретные маленькие просьбы в радиусе 10 минут пешком от вашего дома.
+                    </p>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-6 lg:gap-8">
+                    <div class="p-7 rounded-3xl bg-cream-50 dark:bg-obsidian-800/60 border border-cream-200 dark:border-obsidian-800">
+                        <div class="w-12 h-12 rounded-2xl bg-terracotta-500 text-white flex items-center justify-center text-xl mb-5 shadow-md shadow-terracotta-500/20">
+                            <i class="fa-solid fa-street-view"></i>
+                        </div>
+                        <h3 class="text-lg font-bold mb-2.5">1. В шаговой доступности</h3>
+                        <p class="text-sm text-espresso/75 dark:text-[#F5F0EB]/75 leading-relaxed">
+                            Все задачи привязаны к конкретным дворам и улицам. Вы помогаете людям, с которыми живёте в одном квартале.
+                        </p>
+                    </div>
+
+                    <div class="p-7 rounded-3xl bg-cream-50 dark:bg-obsidian-800/60 border border-cream-200 dark:border-obsidian-800">
+                        <div class="w-12 h-12 rounded-2xl bg-indigoBrand-600 dark:bg-indigoBrand-400 text-white dark:text-obsidian-950 flex items-center justify-center text-xl mb-5 shadow-md shadow-indigoBrand-600/20">
+                            <i class="fa-solid fa-hourglass-half"></i>
+                        </div>
+                        <h3 class="text-lg font-bold mb-2.5">2. От 15 до 30 минут</h3>
+                        <p class="text-sm text-espresso/75 dark:text-[#F5F0EB]/75 leading-relaxed">
+                            Каждое поручение рассчитано так, чтобы вы легко вписали его в обеденный перерыв или вечернюю прогулку.
+                        </p>
+                    </div>
+
+                    <div class="p-7 rounded-3xl bg-cream-50 dark:bg-obsidian-800/60 border border-cream-200 dark:border-obsidian-800">
+                        <div class="w-12 h-12 rounded-2xl bg-terracotta-500 text-white flex items-center justify-center text-xl mb-5 shadow-md shadow-terracotta-500/20">
+                            <i class="fa-solid fa-shield-heart"></i>
+                        </div>
+                        <h3 class="text-lg font-bold mb-2.5">3. Проверенные просьбы</h3>
+                        <p class="text-sm text-espresso/75 dark:text-[#F5F0EB]/75 leading-relaxed">
+                            Координаторы района проверяют каждую заявку. Мы не собираем деньги — мы делимся временем, заботой и участием.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Секция: Каталог актуальных микро-задач -->
+        <section id="tasks" class="py-16 sm:py-24 transition-colors">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12">
+                    <div>
+                        <span class="font-display text-xs font-semibold uppercase tracking-widest text-indigoBrand-600 dark:text-indigoBrand-400">Нужна пара рук прямо сейчас</span>
+                        <h2 class="text-2xl sm:text-4xl font-bold mt-2">Актуальные задачи района</h2>
+                    </div>
+                    
+                    <!-- Фильтры категорий -->
+                    <div class="flex flex-wrap gap-2" id="filter-buttons">
+                        <button onclick="filterTasks('all', this)" class="filter-btn px-4 py-2.5 rounded-xl font-display text-xs font-semibold bg-terracotta-500 dark:bg-terracotta-400 text-white dark:text-obsidian-950 shadow-sm transition">Все</button>
+                        <button onclick="filterTasks('elderly', this)" class="filter-btn px-4 py-2.5 rounded-xl font-display text-xs font-semibold bg-white dark:bg-obsidian-900 text-espresso/80 dark:text-[#F5F0EB]/80 border border-cream-200 dark:border-obsidian-800 hover:border-terracotta-500 transition">Пожилым</button>
+                        <button onclick="filterTasks('eco', this)" class="filter-btn px-4 py-2.5 rounded-xl font-display text-xs font-semibold bg-white dark:bg-obsidian-900 text-espresso/80 dark:text-[#F5F0EB]/80 border border-cream-200 dark:border-obsidian-800 hover:border-terracotta-500 transition">Экология</button>
+                        <button onclick="filterTasks('animals', this)" class="filter-btn px-4 py-2.5 rounded-xl font-display text-xs font-semibold bg-white dark:bg-obsidian-900 text-espresso/80 dark:text-[#F5F0EB]/80 border border-cream-200 dark:border-obsidian-800 hover:border-terracotta-500 transition">Животные</button>
+                        <button onclick="filterTasks('household', this)" class="filter-btn px-4 py-2.5 rounded-xl font-display text-xs font-semibold bg-white dark:bg-obsidian-900 text-espresso/80 dark:text-[#F5F0EB]/80 border border-cream-200 dark:border-obsidian-800 hover:border-terracotta-500 transition">Быт</button>
+                    </div>
+                </div>
+
+                <!-- Сетка задач -->
+                <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6" id="tasks-container">
+                    
+                    <!-- Задача 1 -->
+                    <div class="task-card bg-white dark:bg-obsidian-900 border border-cream-200 dark:border-obsidian-800 rounded-3xl p-6 shadow-sm hover:shadow-xl transition flex flex-col justify-between" data-category="elderly">
+                        <div>
+                            <div class="flex items-center justify-between gap-2 mb-4">
+                                <span class="bg-terracotta-500/15 text-terracotta-600 dark:text-terracotta-400 text-xs px-3 py-1 rounded-full font-semibold">Пожилым</span>
+                                <span class="text-xs font-semibold text-indigoBrand-600 dark:text-indigoBrand-400 bg-indigoBrand-600/10 dark:bg-indigoBrand-400/15 px-2.5 py-1 rounded-lg">
+                                    <i class="fa-regular fa-clock mr-1"></i>15 мин
+                                </span>
+                            </div>
+                            <h3 class="text-base font-bold mb-2 leading-snug">Купить хлеб и молоко для Галины Ивановны</h3>
+                            <p class="text-sm text-espresso/70 dark:text-[#F5F0EB]/70 mb-5 leading-relaxed">
+                                Галине Ивановне 84 года, сегодня гололёд. Магазин находится в соседнем доме, деньги передаст при встрече.
+                            </p>
+                        </div>
+                        <div>
+                            <div class="text-xs text-espresso/60 dark:text-[#F5F0EB]/60 flex items-center gap-2 mb-4 pt-3 border-t border-cream-100 dark:border-obsidian-800">
+                                <i class="fa-solid fa-location-dot text-terracotta-500"></i> Квартал «Южный», ул. Рябиновая, 8
+                            </div>
+                            <button onclick="respondToTask(this)" class="w-full py-3.5 rounded-2xl bg-cream-100 dark:bg-obsidian-800 hover:bg-terracotta-500 hover:text-white dark:hover:bg-terracotta-400 dark:hover:text-obsidian-950 font-display text-xs font-semibold transition">
+                                Откликнуться
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Задача 2 -->
+                    <div class="task-card bg-white dark:bg-obsidian-900 border border-cream-200 dark:border-obsidian-800 rounded-3xl p-6 shadow-sm hover:shadow-xl transition flex flex-col justify-between" data-category="eco">
+                        <div>
+                            <div class="flex items-center justify-between gap-2 mb-4">
+                                <span class="bg-indigoBrand-600/15 dark:bg-indigoBrand-400/20 text-indigoBrand-600 dark:text-indigoBrand-400 text-xs px-3 py-1 rounded-full font-semibold">Экология</span>
+                                <span class="text-xs font-semibold text-indigoBrand-600 dark:text-indigoBrand-400 bg-indigoBrand-600/10 dark:bg-indigoBrand-400/15 px-2.5 py-1 rounded-lg">
+                                    <i class="fa-regular fa-clock mr-1"></i>25 мин
+                                </span>
+                            </div>
+                            <h3 class="text-base font-bold mb-2 leading-snug">Сдать пакет батареек в эко-бокс</h3>
+                            <p class="text-sm text-espresso/70 dark:text-[#F5F0EB]/70 mb-5 leading-relaxed">
+                                В подъезде №2 накопилась полная банка отработанных батареек. Нужно отнести их в пункт приёма в ТЦ «Заря».
+                            </p>
+                        </div>
+                        <div>
+                            <div class="text-xs text-espresso/60 dark:text-[#F5F0EB]/60 flex items-center gap-2 mb-4 pt-3 border-t border-cream-100 dark:border-obsidian-800">
+                                <i class="fa-solid fa-location-dot text-terracotta-500"></i> Бульвар Строителей, 21
+                            </div>
+                            <button onclick="respondToTask(this)" class="w-full py-3.5 rounded-2xl bg-cream-100 dark:bg-obsidian-800 hover:bg-terracotta-500 hover:text-white dark:hover:bg-terracotta-400 dark:hover:text-obsidian-950 font-display text-xs font-semibold transition">
+                                Откликнуться
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Задача 3 -->
+                    <div class="task-card bg-white dark:bg-obsidian-900 border border-cream-200 dark:border-obsidian-800 rounded-3xl p-6 shadow-sm hover:shadow-xl transition flex flex-col justify-between" data-category="animals">
+                        <div>
+                            <div class="flex items-center justify-between gap-2 mb-4">
+                                <span class="bg-amber-500/15 text-amber-700 dark:text-amber-300 text-xs px-3 py-1 rounded-full font-semibold">Животные</span>
+                                <span class="text-xs font-semibold text-indigoBrand-600 dark:text-indigoBrand-400 bg-indigoBrand-600/10 dark:bg-indigoBrand-400/15 px-2.5 py-1 rounded-lg">
+                                    <i class="fa-regular fa-clock mr-1"></i>30 мин
+                                </span>
+                            </div>
+                            <h3 class="text-base font-bold mb-2 leading-snug">Выгулять таксу Тобика вечером</h3>
+                            <p class="text-sm text-espresso/70 dark:text-[#F5F0EB]/70 mb-5 leading-relaxed">
+                                Хозяин на больничном с высокой температурой. Дружелюбный пёс Тобик ждёт короткой прогулки в сквере у дома.
+                            </p>
+                        </div>
+                        <div>
+                            <div class="text-xs text-espresso/60 dark:text-[#F5F0EB]/60 flex items-center gap-2 mb-4 pt-3 border-t border-cream-100 dark:border-obsidian-800">
+                                <i class="fa-solid fa-location-dot text-terracotta-500"></i> Ул. Тенистая, 14
+                            </div>
+                            <button onclick="respondToTask(this)" class="w-full py-3.5 rounded-2xl bg-cream-100 dark:bg-obsidian-800 hover:bg-terracotta-500 hover:text-white dark:hover:bg-terracotta-400 dark:hover:text-obsidian-950 font-display text-xs font-semibold transition">
+                                Откликнуться
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Задача 4 -->
+                    <div class="task-card bg-white dark:bg-obsidian-900 border border-cream-200 dark:border-obsidian-800 rounded-3xl p-6 shadow-sm hover:shadow-xl transition flex flex-col justify-between" data-category="household">
+                        <div>
+                            <div class="flex items-center justify-between gap-2 mb-4">
+                                <span class="bg-purple-500/15 text-purple-700 dark:text-purple-300 text-xs px-3 py-1 rounded-full font-semibold">Быт</span>
+                                <span class="text-xs font-semibold text-indigoBrand-600 dark:text-indigoBrand-400 bg-indigoBrand-600/10 dark:bg-indigoBrand-400/15 px-2.5 py-1 rounded-lg">
+                                    <i class="fa-regular fa-clock mr-1"></i>15 мин
+                                </span>
+                            </div>
+                            <h3 class="text-base font-bold mb-2 leading-snug">Настроить Wi-Fi роутер после сбоя</h3>
+                            <p class="text-sm text-espresso/70 dark:text-[#F5F0EB]/70 mb-5 leading-relaxed">
+                                У семьи с двумя школьниками пропал интернет перед онлайн-уроком. Нужно перезагрузить и проверить настройки.
+                            </p>
+                        </div>
+                        <div>
+                            <div class="text-xs text-espresso/60 dark:text-[#F5F0EB]/60 flex items-center gap-2 mb-4 pt-3 border-t border-cream-100 dark:border-obsidian-800">
+                                <i class="fa-solid fa-location-dot text-terracotta-500"></i> Пр. Мира, 42, кв. 19
+                            </div>
+                            <button onclick="respondToTask(this)" class="w-full py-3.5 rounded-2xl bg-cream-100 dark:bg-obsidian-800 hover:bg-terracotta-500 hover:text-white dark:hover:bg-terracotta-400 dark:hover:text-obsidian-950 font-display text-xs font-semibold transition">
+                                Откликнуться
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Задача 5 -->
+                    <div class="task-card bg-white dark:bg-obsidian-900 border border-cream-200 dark:border-obsidian-800 rounded-3xl p-6 shadow-sm hover:shadow-xl transition flex flex-col justify-between" data-category="elderly">
+                        <div>
+                            <div class="flex items-center justify-between gap-2 mb-4">
+                                <span class="bg-terracotta-500/15 text-terracotta-600 dark:text-terracotta-400 text-xs px-3 py-1 rounded-full font-semibold">Пожилым</span>
+                                <span class="text-xs font-semibold text-indigoBrand-600 dark:text-indigoBrand-400 bg-indigoBrand-600/10 dark:bg-indigoBrand-400/15 px-2.5 py-1 rounded-lg">
+                                    <i class="fa-regular fa-clock mr-1"></i>25 мин
+                                </span>
+                            </div>
+                            <h3 class="text-base font-bold mb-2 leading-snug">Забрать лекарства по рецепту в аптеке</h3>
+                            <p class="text-sm text-espresso/70 dark:text-[#F5F0EB]/70 mb-5 leading-relaxed">
+                                Аптека в 400 метрах от дома. Рецепт и предоплата уже оформлены онлайн, нужно только назвать номер заказа.
+                            </p>
+                        </div>
+                        <div>
+                            <div class="text-xs text-espresso/60 dark:text-[#F5F0EB]/60 flex items-center gap-2 mb-4 pt-3 border-t border-cream-100 dark:border-obsidian-800">
+                                <i class="fa-solid fa-location-dot text-terracotta-500"></i> Ул. Озёрная, 5
+                            </div>
+                            <button onclick="respondToTask(this)" class="w-full py-3.5 rounded-2xl bg-cream-100 dark:bg-obsidian-800 hover:bg-terracotta-500 hover:text-white dark:hover:bg-terracotta-400 dark:hover:text-obsidian-950 font-display text-xs font-semibold transition">
+                                Откликнуться
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Задача 6 -->
+                    <div class="task-card bg-white dark:bg-obsidian-900 border border-cream-200 dark:border-obsidian-800 rounded-3xl p-6 shadow-sm hover:shadow-xl transition flex flex-col justify-between" data-category="eco">
+                        <div>
+                            <div class="flex items-center justify-between gap-2 mb-4">
+                                <span class="bg-indigoBrand-600/15 dark:bg-indigoBrand-400/20 text-indigoBrand-600 dark:text-indigoBrand-400 text-xs px-3 py-1 rounded-full font-semibold">Экология</span>
+                                <span class="text-xs font-semibold text-indigoBrand-600 dark:text-indigoBrand-400 bg-indigoBrand-600/10 dark:bg-indigoBrand-400/15 px-2.5 py-1 rounded-lg">
+                                    <i class="fa-regular fa-clock mr-1"></i>30 мин
+                                </span>
+                            </div>
+                            <h3 class="text-base font-bold mb-2 leading-snug">Поправить кормушки для птиц в сквере</h3>
+                            <p class="text-sm text-espresso/70 dark:text-[#F5F0EB]/70 mb-5 leading-relaxed">
+                                После ветра две деревянные кормушки накренились, нужно закрепить верёвки и насыпать нежареных семечек.
+                            </p>
+                        </div>
+                        <div>
+                            <div class="text-xs text-espresso/60 dark:text-[#F5F0EB]/60 flex items-center gap-2 mb-4 pt-3 border-t border-cream-100 dark:border-obsidian-800">
+                                <i class="fa-solid fa-location-dot text-terracotta-500"></i> Сквер им. Гагарина
+                            </div>
+                            <button onclick="respondToTask(this)" class="w-full py-3.5 rounded-2xl bg-cream-100 dark:bg-obsidian-800 hover:bg-terracotta-500 hover:text-white dark:hover:bg-terracotta-400 dark:hover:text-obsidian-950 font-display text-xs font-semibold transition">
+                                Откликнуться
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- Секция: Герои нашего района (Вымышленные помощники) -->
+        <section id="team" class="py-16 sm:py-24 bg-white dark:bg-obsidian-900 border-y border-cream-200 dark:border-obsidian-800 transition-colors">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center max-w-2xl mx-auto mb-14">
+                    <span class="font-display text-xs font-semibold uppercase tracking-widest text-terracotta-500 dark:text-terracotta-400">Люди с большим сердцем</span>
+                    <h2 class="text-2xl sm:text-4xl font-bold mt-2">Герои нашего района</h2>
+                    <p class="mt-3 text-sm sm:text-base text-espresso/70 dark:text-[#F5F0EB]/70">
+                        Обычные жители нашего города, которые находят четверть часа между работой и семьёй, чтобы поддержать тех, кто живёт рядом.
+                    </p>
+                </div>
+
+                <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    
+                    <!-- Герой 1 -->
+                    <div class="bg-cream-50 dark:bg-obsidian-800/60 border border-cream-200 dark:border-obsidian-800 rounded-3xl p-6 flex flex-col justify-between hover:-translate-y-1 transition duration-300">
+                        <div>
+                            <div class="flex items-center gap-4 mb-4">
+                                <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=180&auto=format&fit=crop&q=80" onerror="this.src='https://placehold.co/150x150/E05A47/FFFFFF?text=ЕВ'" alt="Елена Воронова" class="w-16 h-16 rounded-2xl object-cover ring-2 ring-terracotta-500/40">
+                                <div>
+                                    <h3 class="text-sm font-bold leading-snug">Елена Воронова</h3>
+                                    <p class="text-xs text-indigoBrand-600 dark:text-indigoBrand-400 font-medium mt-0.5">34 года · Библиотекарь</p>
+                                </div>
+                            </div>
+                            <p class="text-xs text-espresso/75 dark:text-[#F5F0EB]/75 leading-relaxed mb-4">
+                                «По дороге из библиотеки захожу к двум бабушкам в соседнем дворе — приношу свежие книги и продукты».
+                            </p>
+                        </div>
+                        <div>
+                            <div class="flex flex-wrap gap-1.5 mb-4">
+                                <span class="text-[10px] font-semibold px-2.5 py-1 rounded-lg bg-terracotta-500/15 text-terracotta-600 dark:text-terracotta-400">Доброе сердце</span>
+                                <span class="text-[10px] font-semibold px-2.5 py-1 rounded-lg bg-indigoBrand-600/15 dark:bg-indigoBrand-400/20 text-indigoBrand-600 dark:text-indigoBrand-400">Наставник</span>
+                            </div>
+                            <div class="bg-white dark:bg-obsidian-900 rounded-2xl py-2.5 px-4 border border-cream-200 dark:border-obsidian-800 flex items-center justify-between">
+                                <span class="text-xs text-espresso/65 dark:text-[#F5F0EB]/65">Выполнено задач</span>
+                                <span class="font-display text-base font-bold text-terracotta-500 dark:text-terracotta-400">67</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Герой 2 -->
+                    <div class="bg-cream-50 dark:bg-obsidian-800/60 border border-cream-200 dark:border-obsidian-800 rounded-3xl p-6 flex flex-col justify-between hover:-translate-y-1 transition duration-300">
+                        <div>
+                            <div class="flex items-center gap-4 mb-4">
+                                <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=180&auto=format&fit=crop&q=80" onerror="this.src='https://placehold.co/150x150/3B429F/FFFFFF?text=ТГ'" alt="Тимур Громов" class="w-16 h-16 rounded-2xl object-cover ring-2 ring-indigoBrand-500/40">
+                                <div>
+                                    <h3 class="text-sm font-bold leading-snug">Тимур Громов</h3>
+                                    <p class="text-xs text-indigoBrand-600 dark:text-indigoBrand-400 font-medium mt-0.5">27 лет · Мастер по ремонту</p>
+                                </div>
+                            </div>
+                            <p class="text-xs text-espresso/75 dark:text-[#F5F0EB]/75 leading-relaxed mb-4">
+                                «Ношу в рюкзаке мультитул. Починить дверной доводчик или подкрутить кран пенсионерам — дело десяти минут».
+                            </p>
+                        </div>
+                        <div>
+                            <div class="flex flex-wrap gap-1.5 mb-4">
+                                <span class="text-[10px] font-semibold px-2.5 py-1 rounded-lg bg-indigoBrand-600/15 dark:bg-indigoBrand-400/20 text-indigoBrand-600 dark:text-indigoBrand-400">Золотые руки</span>
+                                <span class="text-[10px] font-semibold px-2.5 py-1 rounded-lg bg-amber-500/15 text-amber-700 dark:text-amber-300">Спринтер</span>
+                            </div>
+                            <div class="bg-white dark:bg-obsidian-900 rounded-2xl py-2.5 px-4 border border-cream-200 dark:border-obsidian-800 flex items-center justify-between">
+                                <span class="text-xs text-espresso/65 dark:text-[#F5F0EB]/65">Выполнено задач</span>
+                                <span class="font-display text-base font-bold text-indigoBrand-600 dark:text-indigoBrand-400">83</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Герой 3 -->
+                    <div class="bg-cream-50 dark:bg-obsidian-800/60 border border-cream-200 dark:border-obsidian-800 rounded-3xl p-6 flex flex-col justify-between hover:-translate-y-1 transition duration-300">
+                        <div>
+                            <div class="flex items-center gap-4 mb-4">
+                                <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=180&auto=format&fit=crop&q=80" onerror="this.src='https://placehold.co/150x150/E05A47/FFFFFF?text=НС'" alt="Надежда Соколова" class="w-16 h-16 rounded-2xl object-cover ring-2 ring-terracotta-500/40">
+                                <div>
+                                    <h3 class="text-sm font-bold leading-snug">Надежда Соколова</h3>
+                                    <p class="text-xs text-indigoBrand-600 dark:text-indigoBrand-400 font-medium mt-0.5">48 лет · Учитель биологии</p>
+                                </div>
+                            </div>
+                            <p class="text-xs text-espresso/75 dark:text-[#F5F0EB]/75 leading-relaxed mb-4">
+                                «Вместе с сыном следим за сквером у школы, развешиваем скворечники и помогаем приюту для кошек».
+                            </p>
+                        </div>
+                        <div>
+                            <div class="flex flex-wrap gap-1.5 mb-4">
+                                <span class="text-[10px] font-semibold px-2.5 py-1 rounded-lg bg-terracotta-500/15 text-terracotta-600 dark:text-terracotta-400">Эко-хранитель</span>
+                                <span class="text-[10px] font-semibold px-2.5 py-1 rounded-lg bg-indigoBrand-600/15 dark:bg-indigoBrand-400/20 text-indigoBrand-600 dark:text-indigoBrand-400">Друг зверей</span>
+                            </div>
+                            <div class="bg-white dark:bg-obsidian-900 rounded-2xl py-2.5 px-4 border border-cream-200 dark:border-obsidian-800 flex items-center justify-between">
+                                <span class="text-xs text-espresso/65 dark:text-[#F5F0EB]/65">Выполнено задач</span>
+                                <span class="font-display text-base font-bold text-terracotta-500 dark:text-terracotta-400">112</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Герой 4 -->
+                    <div class="bg-cream-50 dark:bg-obsidian-800/60 border border-cream-200 dark:border-obsidian-800 rounded-3xl p-6 flex flex-col justify-between hover:-translate-y-1 transition duration-300">
+                        <div>
+                            <div class="flex items-center gap-4 mb-4">
+                                <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=180&auto=format&fit=crop&q=80" onerror="this.src='https://placehold.co/150x150/3B429F/FFFFFF?text=МБ'" alt="Максим Белов" class="w-16 h-16 rounded-2xl object-cover ring-2 ring-indigoBrand-500/40">
+                                <div>
+                                    <h3 class="text-sm font-bold leading-snug">Максим Белов</h3>
+                                    <p class="text-xs text-indigoBrand-600 dark:text-indigoBrand-400 font-medium mt-0.5">21 год · Студент-медик</p>
+                                </div>
+                            </div>
+                            <p class="text-xs text-espresso/75 dark:text-[#F5F0EB]/75 leading-relaxed mb-4">
+                                «После пар бегаю в парке и заодно забираю рецептурные лекарства из аптеки для маломобильных соседей».
+                            </p>
+                        </div>
+                        <div>
+                            <div class="flex flex-wrap gap-1.5 mb-4">
+                                <span class="text-[10px] font-semibold px-2.5 py-1 rounded-lg bg-indigoBrand-600/15 dark:bg-indigoBrand-400/20 text-indigoBrand-600 dark:text-indigoBrand-400">Скорая помощь</span>
+                                <span class="text-[10px] font-semibold px-2.5 py-1 rounded-lg bg-terracotta-500/15 text-terracotta-600 dark:text-terracotta-400">Надёжный сосед</span>
+                            </div>
+                            <div class="bg-white dark:bg-obsidian-900 rounded-2xl py-2.5 px-4 border border-cream-200 dark:border-obsidian-800 flex items-center justify-between">
+                                <span class="text-xs text-espresso/65 dark:text-[#F5F0EB]/65">Выполнено задач</span>
+                                <span class="font-display text-base font-bold text-indigoBrand-600 dark:text-indigoBrand-400">49</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- Секция: Форма записи (Стать волонтёром / Попросить о помощи) -->
+        <section id="join" class="py-16 sm:py-24 transition-colors">
+            <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="bg-white dark:bg-obsidian-900 border border-cream-200 dark:border-obsidian-800 rounded-3xl p-7 sm:p-11 shadow-2xl">
+                    <div class="text-center mb-8">
+                        <span class="font-display text-xs font-semibold uppercase tracking-widest text-terracotta-500 dark:text-terracotta-400">Присоединяйтесь за 1 минуту</span>
+                        <h2 class="text-2xl sm:text-3xl font-bold mt-2">Участвовать в «ДоброРядом»</h2>
+                        <p class="text-sm text-espresso/70 dark:text-[#F5F0EB]/70 mt-2">
+                            Выберите вкладку: хотите ли вы уделять 15 минут добрым делам или вам сейчас нужна поддержка соседей.
+                        </p>
+                    </div>
+
+                    <!-- Переключатель вкладок в форме -->
+                    <div class="grid grid-cols-2 gap-2 p-1.5 bg-cream-100 dark:bg-obsidian-800 rounded-2xl max-w-md mx-auto mb-8">
+                        <button type="button" onclick="setFormRole('volunteer')" id="role-vol-btn" class="py-3 px-4 font-display text-xs font-semibold rounded-xl bg-terracotta-500 dark:bg-terracotta-400 text-white dark:text-obsidian-950 shadow-sm transition">
+                            Стать волонтёром
+                        </button>
+                        <button type="button" onclick="setFormRole('need_help')" id="role-need-btn" class="py-3 px-4 font-display text-xs font-semibold rounded-xl text-espresso/70 dark:text-[#F5F0EB]/70 hover:text-espresso dark:hover:text-white transition">
+                            Попросить о помощи
+                        </button>
+                    </div>
+
+                    <form id="action-form" onsubmit="handleFormSubmit(event)" class="space-y-5">
+                        <div class="grid sm:grid-cols-2 gap-5">
+                            <div>
+                                <label for="user-name" class="block text-xs font-semibold uppercase tracking-wider text-espresso/65 dark:text-[#F5F0EB]/65 mb-2">Ваше имя *</label>
+                                <input id="user-name" type="text" required minlength="2" placeholder="Например: Ольга Смирнова" class="w-full px-4 py-3.5 rounded-2xl border border-cream-200 dark:border-obsidian-800 bg-cream-50/70 dark:bg-obsidian-800/60 focus:outline-none focus:ring-2 focus:ring-terracotta-500 dark:focus:ring-terracotta-400 transition text-sm">
+                            </div>
+                            <div>
+                                <label for="user-contact" class="block text-xs font-semibold uppercase tracking-wider text-espresso/65 dark:text-[#F5F0EB]/65 mb-2">Телефон или Telegram *</label>
+                                <input id="user-contact" type="text" required minlength="5" placeholder="+7 (900) 123-45-67 или @username" class="w-full px-4 py-3.5 rounded-2xl border border-cream-200 dark:border-obsidian-800 bg-cream-50/70 dark:bg-obsidian-800/60 focus:outline-none focus:ring-2 focus:ring-terracotta-500 dark:focus:ring-terracotta-400 transition text-sm">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="user-district" class="block text-xs font-semibold uppercase tracking-wider text-espresso/65 dark:text-[#F5F0EB]/65 mb-2">Ваш квартал / улица *</label>
+                            <input id="user-district" type="text" required minlength="3" placeholder="Например: Квартал «Южный», ул. Рябиновая" class="w-full px-4 py-3.5 rounded-2xl border border-cream-200 dark:border-obsidian-800 bg-cream-50/70 dark:bg-obsidian-800/60 focus:outline-none focus:ring-2 focus:ring-terracotta-500 dark:focus:ring-terracotta-400 transition text-sm">
+                        </div>
+
+                        <div>
+                            <label for="user-message" id="comment-label" class="block text-xs font-semibold uppercase tracking-wider text-espresso/65 dark:text-[#F5F0EB]/65 mb-2">Чем вы готовы помогать и в какое время? *</label>
+                            <textarea id="user-message" rows="3" required minlength="10" placeholder="Например: Могу заносить продукты пожилым по вечерам после 18:00 или выгуливать собак в выходные." class="w-full px-4 py-3.5 rounded-2xl border border-cream-200 dark:border-obsidian-800 bg-cream-50/70 dark:bg-obsidian-800/60 focus:outline-none focus:ring-2 focus:ring-terracotta-500 dark:focus:ring-terracotta-400 transition text-sm"></textarea>
+                        </div>
+
+                        <button type="submit" id="submit-btn" class="w-full py-4 bg-terracotta-500 hover:bg-terracotta-600 dark:bg-terracotta-400 dark:hover:bg-terracotta-500 text-white dark:text-obsidian-950 font-display text-xs sm:text-sm font-bold rounded-2xl shadow-lg shadow-terracotta-500/25 transition hover:-translate-y-0.5">
+                            Записаться в волонтёры
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Подвал сайта -->
+    <footer class="bg-white dark:bg-obsidian-900 border-t border-cream-200 dark:border-obsidian-800 py-10 transition-colors">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-terracotta-500/15 text-terracotta-500 dark:text-terracotta-400 flex items-center justify-center">
+                    <i class="fa-solid fa-house-heart"></i>
+                </div>
+                <div>
+                    <span class="font-display text-sm font-bold">ДоброРядом</span>
+                    <span class="block text-xs text-espresso/60 dark:text-[#F5F0EB]/60">© 2026 Благотворительная инициатива соседской взаимопомощи</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button onclick="openGuide()" class="text-xs font-display font-semibold text-indigoBrand-600 dark:text-indigoBrand-400 hover:underline mr-3">
+                    Путеводитель по сайту
+                </button>
+                <a href="#about" class="w-9 h-9 rounded-xl bg-cream-100 dark:bg-obsidian-800 hover:bg-terracotta-500 hover:text-white flex items-center justify-center transition" aria-label="Telegram"><i class="fa-brands fa-telegram"></i></a>
+                <a href="#about" class="w-9 h-9 rounded-xl bg-cream-100 dark:bg-obsidian-800 hover:bg-terracotta-500 hover:text-white flex items-center justify-center transition" aria-label="VK"><i class="fa-brands fa-vk"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Скрипты интерактивности -->
+    <script>
+        // 1. Управление светлой и тёмной темой с сохранением в localStorage
+        const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+        const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+        const themeToggleBtn = document.getElementById('theme-toggle');
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+                themeToggleLightIcon.classList.remove('hidden');
+                themeToggleDarkIcon.classList.add('hidden');
+            } else {
+                document.documentElement.classList.remove('dark');
+                themeToggleDarkIcon.classList.remove('hidden');
+                themeToggleLightIcon.classList.add('hidden');
+            }
+        }
+
+        const savedTheme = localStorage.getItem('dobroryadom-theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        applyTheme(savedTheme ? savedTheme === 'dark' : prefersDark);
+
+        themeToggleBtn.addEventListener('click', () => {
+            const isCurrentlyDark = document.documentElement.classList.contains('dark');
+            const nextIsDark = !isCurrentlyDark;
+            applyTheme(nextIsDark);
+            localStorage.setItem('dobroryadom-theme', nextIsDark ? 'dark' : 'light');
+        });
+
+        // 2. Мобильное меню
+        function toggleMobileMenu() {
+            document.getElementById('mobile-menu').classList.toggle('hidden');
+        }
+        document.getElementById('mobile-menu-btn').addEventListener('click', toggleMobileMenu);
+
+        // 3. Интерактивный Путеводитель с плавной прокруткой и подсветкой секции
+        function openGuide() {
+            document.getElementById('guide-modal').classList.remove('hidden');
+        }
+
+        function closeGuide() {
+            document.getElementById('guide-modal').classList.add('hidden');
+        }
+
+        function navigateTo(selector, formRole = null) {
+            closeGuide();
+            if (formRole) {
+                setFormRole(formRole);
+            }
+            const target = document.querySelector(selector);
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                target.classList.remove('highlight-target');
+                void target.offsetWidth; // перезапуск анимации
+                target.classList.add('highlight-target');
+                setTimeout(() => target.classList.remove('highlight-target'), 3400);
+            }
+        }
+
+        // 4. Фильтрация микро-задач по категориям
+        function filterTasks(category, activeBtn) {
+            const cards = document.querySelectorAll('.task-card');
+            const buttons = document.querySelectorAll('.filter-btn');
+
+            buttons.forEach(btn => {
+                btn.className = 'filter-btn px-4 py-2.5 rounded-xl font-display text-xs font-semibold bg-white dark:bg-obsidian-900 text-espresso/80 dark:text-[#F5F0EB]/80 border border-cream-200 dark:border-obsidian-800 hover:border-terracotta-500 transition';
+            });
+
+            activeBtn.className = 'filter-btn px-4 py-2.5 rounded-xl font-display text-xs font-semibold bg-terracotta-500 dark:bg-terracotta-400 text-white dark:text-obsidian-950 shadow-sm transition';
+
+            cards.forEach(card => {
+                if (category === 'all' || card.dataset.category === category) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // 5. Отклик на задачу с изменением статуса и обновлением счётчика
+        let tasksCount = 1482;
+        function respondToTask(btn) {
+            const isJoined = btn.dataset.joined === 'true';
+            const statEl = document.getElementById('stat-tasks-done');
+
+            if (!isJoined) {
+                btn.dataset.joined = 'true';
+                btn.innerHTML = 'Вы записаны ✓';
+                btn.className = 'w-full py-3.5 rounded-2xl bg-indigoBrand-600 dark:bg-indigoBrand-400 text-white dark:text-obsidian-950 font-display text-xs font-semibold shadow-md transition';
+                tasksCount += 1;
+            } else {
+                btn.dataset.joined = 'false';
+                btn.innerHTML = 'Откликнуться';
+                btn.className = 'w-full py-3.5 rounded-2xl bg-cream-100 dark:bg-obsidian-800 hover:bg-terracotta-500 hover:text-white dark:hover:bg-terracotta-400 dark:hover:text-obsidian-950 font-display text-xs font-semibold transition';
+                tasksCount -= 1;
+            }
+            statEl.textContent = tasksCount.toLocaleString('ru-RU');
+        }
+
+        // 6. Переключение вкладок формы («Стать волонтёром» / «Попросить о помощи»)
+        let currentRole = 'volunteer';
+        function setFormRole(role) {
+            currentRole = role;
+            const volBtn = document.getElementById('role-vol-btn');
+            const needBtn = document.getElementById('role-need-btn');
+            const commentLabel = document.getElementById('comment-label');
+            const commentInput = document.getElementById('user-message');
+            const submitBtn = document.getElementById('submit-btn');
+
+            const activeClasses = 'py-3 px-4 font-display text-xs font-semibold rounded-xl bg-terracotta-500 dark:bg-terracotta-400 text-white dark:text-obsidian-950 shadow-sm transition';
+            const inactiveClasses = 'py-3 px-4 font-display text-xs font-semibold rounded-xl text-espresso/70 dark:text-[#F5F0EB]/70 hover:text-espresso dark:hover:text-white transition';
+
+            if (role === 'volunteer') {
+                volBtn.className = activeClasses;
+                needBtn.className = inactiveClasses;
+                commentLabel.textContent = 'Чем вы готовы помогать и в какое время? *';
+                commentInput.placeholder = 'Например: Могу заносить продукты пожилым по вечерам после 18:00 или выгуливать собак в выходные.';
+                submitBtn.textContent = 'Записаться в волонтёры';
+            } else {
+                needBtn.className = activeClasses;
+                volBtn.className = inactiveClasses;
+                commentLabel.textContent = 'Какая помощь нужна и сколько времени это займёт? *';
+                commentInput.placeholder = 'Например: Нужно забрать посылку на почте в соседнем доме, займёт около 15 минут.';
+                submitBtn.textContent = 'Отправить просьбу о помощи';
+            }
+        }
+
+        // 7. Отправка формы и открытие модального окна подтверждения
+        let volunteersCount = 514;
+        function handleFormSubmit(event) {
+            event.preventDefault();
+            const name = document.getElementById('user-name').value.trim();
+            const titleEl = document.getElementById('confirm-title');
+            const descEl = document.getElementById('confirm-desc');
+
+            if (currentRole === 'volunteer') {
+                volunteersCount += 1;
+                document.getElementById('stat-volunteers').textContent = volunteersCount.toLocaleString('ru-RU');
+                titleEl.textContent = `Добро пожаловать в команду, ${name}!`;
+                descEl.textContent = 'Вы успешно зарегистрированы как микро-волонтёр. Мы пришлём уведомление, как только в вашем квартале появится подходящая задача на 15–30 минут.';
+            } else {
+                titleEl.textContent = `Заявка принята, ${name}!`;
+                descEl.textContent = 'Координатор вашего квартала проверит просьбу в течение 15 минут и опубликует её для соседей-волонтёров.';
+            }
+
+            document.getElementById('confirm-modal').classList.remove('hidden');
+            event.target.reset();
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirm-modal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
